@@ -1,0 +1,5 @@
+{
+  "name": "GCE Erode Intelligent Notification Framework",
+  "description": "A centralized, role-based digital notification system for GCE Erode, providing secure communication, analytics, and mandatory acknowledgment tracking for students, faculty, and administration.",
+  "requestFramePermissions": []
+}
