@@ -19,7 +19,42 @@ const NotificationList: React.FC = () => {
     const list = NotificationService.getFilteredNotifications(user);
     setNotifications(list);
     setAcks(NotificationService.getAcknowledgments().filter(a => a.userId === user?.id));
+
+    // Mark all unread notifications as read when page opens
+    markAllAsRead(list);
   }, [user]);
+
+  const markAllAsRead = async (notifList: Notification[]) => {
+    if (!user?.id) return;
+
+    const unreadIds = notifList
+      .filter(n => {
+        const userAck = acks.find(a => a.notificationId === n.id);
+        return !userAck && n.senderId !== user.id;
+      })
+      .map(n => n.id);
+
+    if (unreadIds.length === 0) return;
+
+    try {
+      const response = await fetch('http://localhost:5005/api/notifications/mark-read', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ userId: user.id, notificationIds: unreadIds })
+      });
+
+      if (response.ok) {
+        console.log('Marked notifications as read');
+        // Also mark locally
+        unreadIds.forEach(id => {
+          NotificationService.acknowledge(id, user.id, 'VIEWED');
+        });
+        setAcks([...NotificationService.getAcknowledgments().filter(a => a.userId === user?.id)]);
+      }
+    } catch (error) {
+      console.error('Failed to mark as read:', error);
+    }
+  };
 
   const handleAcknowledge = (id: string) => {
     NotificationService.acknowledge(id, user!.id, 'ACKNOWLEDGED');
@@ -34,8 +69,8 @@ const NotificationList: React.FC = () => {
   const filtered = notifications.filter(n => {
     const catMatch = filter === 'ALL' || n.category === filter;
     const s = search.toLowerCase();
-    const searchMatch = 
-      n.title.toLowerCase().includes(s) || 
+    const searchMatch =
+      n.title.toLowerCase().includes(s) ||
       n.content.toLowerCase().includes(s) ||
       n.senderName.toLowerCase().includes(s) ||
       new Date(n.createdAt).toLocaleDateString().includes(s);
@@ -47,7 +82,7 @@ const NotificationList: React.FC = () => {
       <div className="flex flex-col md:flex-row gap-4 items-center justify-between">
         <div className="relative w-full md:w-96">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" size={18} />
-          <input type="text" placeholder="Search notifications..." className="w-full pl-10 pr-4 py-3 rounded-xl border border-slate-200 focus:ring-2 focus:ring-indigo-500 outline-none transition-all" value={search} onChange={(e) => setSearch(e.target.value)}/>
+          <input type="text" placeholder="Search notifications..." className="w-full pl-10 pr-4 py-3 rounded-xl border border-slate-200 focus:ring-2 focus:ring-indigo-500 outline-none transition-all" value={search} onChange={(e) => setSearch(e.target.value)} />
         </div>
         <div className="flex gap-2 overflow-x-auto pb-1 w-full md:w-auto scrollbar-hide">
           {['ALL', ...Object.values(NotificationCategory)].map((cat) => (
@@ -75,10 +110,10 @@ const NotificationList: React.FC = () => {
                       {!isViewed && !isOwn && <span className="w-2 h-2 bg-indigo-600 rounded-full"></span>}
                     </div>
                     <div>
-                      <h3 className="text-xl font-bold text-slate-900 leading-tight cursor-pointer hover:text-indigo-600 transition-colors" onClick={() => { setSelectedNotif(notif); if(!isViewed && !isOwn) markAsViewed(notif.id); }}>{notif.title}</h3>
+                      <h3 className="text-xl font-bold text-slate-900 leading-tight cursor-pointer hover:text-indigo-600 transition-colors" onClick={() => { setSelectedNotif(notif); if (!isViewed && !isOwn) markAsViewed(notif.id); }}>{notif.title}</h3>
                       <div className="flex items-center gap-4 mt-2 text-xs text-slate-400 font-medium">
-                        <span className="flex items-center gap-1"><UserIcon size={14}/> {notif.senderName}</span>
-                        <span className="flex items-center gap-1"><Calendar size={14}/> {new Date(notif.createdAt).toLocaleDateString()}</span>
+                        <span className="flex items-center gap-1"><UserIcon size={14} /> {notif.senderName}</span>
+                        <span className="flex items-center gap-1"><Calendar size={14} /> {new Date(notif.createdAt).toLocaleDateString()}</span>
                       </div>
                     </div>
                   </div>
@@ -86,12 +121,12 @@ const NotificationList: React.FC = () => {
                   <div className="md:w-56 flex flex-col justify-center">
                     {isOwn ? (
                       <button onClick={() => setSelectedNotif(notif)} className="w-full py-3 bg-slate-50 text-indigo-700 border border-indigo-100 rounded-xl text-sm font-bold flex items-center justify-center gap-2 hover:bg-indigo-50 transition-all">
-                        <Users size={18}/> Tracking ({stats.viewed} Viewed)
+                        <Users size={18} /> Tracking ({stats.viewed} Viewed)
                       </button>
                     ) : (
                       notif.requiresAcknowledgment ? (
                         <button onClick={() => handleAcknowledge(notif.id)} disabled={isAcked} className={`w-full py-3 rounded-xl flex items-center justify-center gap-2 text-sm font-bold transition-all ${isAcked ? 'bg-emerald-50 text-emerald-600 border border-emerald-200' : 'bg-indigo-600 text-white hover:bg-indigo-700 shadow-md active:scale-95'}`}>
-                          {isAcked ? <CheckCircle2 size={18}/> : null}
+                          {isAcked ? <CheckCircle2 size={18} /> : null}
                           {isAcked ? 'Acknowledged' : 'Acknowledge Notice'}
                         </button>
                       ) : (
@@ -105,7 +140,7 @@ const NotificationList: React.FC = () => {
           );
         }) : (
           <div className="bg-white rounded-3xl border border-dashed border-slate-300 p-20 text-center space-y-4">
-            <div className="w-16 h-16 bg-slate-100 rounded-full flex items-center justify-center mx-auto text-slate-400"><Bell size={32}/></div>
+            <div className="w-16 h-16 bg-slate-100 rounded-full flex items-center justify-center mx-auto text-slate-400"><Bell size={32} /></div>
             <h3 className="text-lg font-bold text-slate-900">Framework empty</h3>
             <p className="text-slate-500">Official updates from GCE Erode will appear here.</p>
           </div>
@@ -120,9 +155,9 @@ const NotificationList: React.FC = () => {
                 <span className={`px-2 py-0.5 rounded-md text-[10px] font-bold uppercase ${CATEGORY_COLORS[selectedNotif.category]}`}>{selectedNotif.category}</span>
                 <h2 className="text-2xl font-bold text-slate-900">{selectedNotif.title}</h2>
               </div>
-              <button onClick={() => setSelectedNotif(null)} className="p-2 hover:bg-slate-200 rounded-full transition-colors"><XCircle size={24} className="text-slate-400"/></button>
+              <button onClick={() => setSelectedNotif(null)} className="p-2 hover:bg-slate-200 rounded-full transition-colors"><XCircle size={24} className="text-slate-400" /></button>
             </div>
-            
+
             <div className="p-8 overflow-y-auto flex-1 space-y-6">
               <div className="p-4 bg-indigo-50 rounded-2xl border border-indigo-100 flex items-center gap-4">
                 <div className="w-12 h-12 bg-white rounded-xl flex items-center justify-center text-indigo-600 font-bold border border-indigo-200">{selectedNotif.senderName.charAt(0)}</div>
@@ -132,21 +167,21 @@ const NotificationList: React.FC = () => {
                 </div>
               </div>
               <p className="text-slate-700 whitespace-pre-wrap leading-relaxed text-lg">{selectedNotif.content}</p>
-              
+
               {selectedNotif.senderId === user?.id && (
                 <div className="pt-6 border-t space-y-4">
-                  <h4 className="font-bold text-slate-900 flex items-center gap-2"><Eye size={18}/> Delivery Tracking Summary</h4>
+                  <h4 className="font-bold text-slate-900 flex items-center gap-2"><Eye size={18} /> Delivery Tracking Summary</h4>
                   <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
                     <div className="p-4 bg-slate-50 rounded-xl border border-slate-100 text-center">
-                       <p className="text-[10px] font-bold text-slate-400 uppercase">Viewed</p>
-                       <p className="text-xl font-bold text-indigo-600">{NotificationService.getNotificationStats(selectedNotif.id).viewed}</p>
+                      <p className="text-[10px] font-bold text-slate-400 uppercase">Viewed</p>
+                      <p className="text-xl font-bold text-indigo-600">{NotificationService.getNotificationStats(selectedNotif.id).viewed}</p>
                     </div>
                     <div className="p-4 bg-slate-50 rounded-xl border border-slate-100 text-center">
-                       <p className="text-[10px] font-bold text-slate-400 uppercase">Acknowledged</p>
-                       <p className="text-xl font-bold text-emerald-600">{NotificationService.getNotificationStats(selectedNotif.id).acknowledged}</p>
+                      <p className="text-[10px] font-bold text-slate-400 uppercase">Acknowledged</p>
+                      <p className="text-xl font-bold text-emerald-600">{NotificationService.getNotificationStats(selectedNotif.id).acknowledged}</p>
                     </div>
                   </div>
-                  
+
                   <div className="space-y-2">
                     <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Active User Engagement</p>
                     <div className="max-h-48 overflow-y-auto space-y-2">

@@ -2,7 +2,7 @@
 import React, { useState } from 'react';
 import { useAuth } from '../services/AuthContext';
 import { Link, useNavigate } from 'react-router-dom';
-import { AlertCircle, Loader2, ArrowLeft } from 'lucide-react';
+import { AlertCircle, Loader2, ArrowLeft, Eye, EyeOff, ShieldCheck } from 'lucide-react';
 import { UserRole, Department } from '../types';
 
 const SignUpPage: React.FC = () => {
@@ -10,6 +10,7 @@ const SignUpPage: React.FC = () => {
   const navigate = useNavigate();
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [showPassword, setShowPassword] = useState(false);
 
   const [formData, setFormData] = useState({
     name: '',
@@ -36,7 +37,7 @@ const SignUpPage: React.FC = () => {
 
   const handleRoleChange = (role: UserRole) => {
     let dept: Department | '' = '';
-    
+
     if (role === UserRole.OFFICE_STAFF || role === UserRole.PLACEMENT_CELL) {
       dept = Department.GENERAL;
     } else if (role === UserRole.ADMINISTRATION) {
@@ -79,7 +80,7 @@ const SignUpPage: React.FC = () => {
         year: formData.role === UserRole.STUDENT ? formData.year : undefined,
         isPrincipal: formData.isPrincipal
       }, formData.password);
-      
+
       navigate('/dashboard');
     } catch (err: any) {
       setError(err.message);
@@ -114,17 +115,17 @@ const SignUpPage: React.FC = () => {
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               <div className="space-y-2">
                 <label className="text-sm font-bold text-slate-700">Full Name</label>
-                <input type="text" required className="w-full px-4 py-3 rounded-xl border border-slate-200 focus:ring-2 focus:ring-indigo-500 outline-none transition-all" value={formData.name} onChange={(e) => setFormData({...formData, name: e.target.value})} />
+                <input type="text" required className="w-full px-4 py-3 rounded-xl border border-slate-200 focus:ring-2 focus:ring-indigo-500 outline-none transition-all" value={formData.name} onChange={(e) => setFormData({ ...formData, name: e.target.value })} />
               </div>
 
               <div className="space-y-2">
                 <label className="text-sm font-bold text-slate-700">Campus Email</label>
-                <input 
-                  type="email" 
-                  required 
-                  className="w-full px-4 py-3 rounded-xl border border-slate-200 focus:ring-2 focus:ring-indigo-500 outline-none transition-all" 
-                  value={formData.email} 
-                  onChange={(e) => setFormData({...formData, email: e.target.value})}
+                <input
+                  type="email"
+                  required
+                  className="w-full px-4 py-3 rounded-xl border border-slate-200 focus:ring-2 focus:ring-indigo-500 outline-none transition-all"
+                  value={formData.email}
+                  onChange={(e) => setFormData({ ...formData, email: e.target.value })}
                   autoCapitalize="none"
                   autoCorrect="off"
                   spellCheck="false"
@@ -134,7 +135,7 @@ const SignUpPage: React.FC = () => {
 
               <div className="space-y-2">
                 <label className="text-sm font-bold text-slate-700">Phone Number</label>
-                <input type="tel" required pattern="[0-9]{10}" placeholder="10-digit numeric" className="w-full px-4 py-3 rounded-xl border border-slate-200 focus:ring-2 focus:ring-indigo-500 outline-none transition-all" value={formData.phoneNumber} onChange={(e) => setFormData({...formData, phoneNumber: e.target.value})} />
+                <input type="tel" required pattern="[0-9]{10}" placeholder="10-digit numeric" className="w-full px-4 py-3 rounded-xl border border-slate-200 focus:ring-2 focus:ring-indigo-500 outline-none transition-all" value={formData.phoneNumber} onChange={(e) => setFormData({ ...formData, phoneNumber: e.target.value })} />
               </div>
 
               <div className="space-y-2">
@@ -148,15 +149,15 @@ const SignUpPage: React.FC = () => {
               {formData.role === UserRole.STUDENT && (
                 <div className="space-y-2">
                   <label className="text-sm font-bold text-slate-700">Roll Number</label>
-                  <input type="text" required placeholder="e.g. 23CSE01" className="w-full px-4 py-3 rounded-xl border border-slate-200 focus:ring-2 focus:ring-indigo-500 outline-none transition-all uppercase" value={formData.rollNumber} onChange={(e) => setFormData({...formData, rollNumber: e.target.value})} />
+                  <input type="text" required placeholder="e.g. 23CSE01" className="w-full px-4 py-3 rounded-xl border border-slate-200 focus:ring-2 focus:ring-indigo-500 outline-none transition-all uppercase" value={formData.rollNumber} onChange={(e) => setFormData({ ...formData, rollNumber: e.target.value })} />
                 </div>
               )}
 
               <div className="space-y-2">
                 <label className="text-sm font-bold text-slate-700">Department</label>
-                <select className="w-full px-4 py-3 rounded-xl border border-slate-200 focus:ring-2 focus:ring-indigo-500 outline-none transition-all bg-white" value={formData.department} disabled={formData.isPrincipal || [UserRole.OFFICE_STAFF, UserRole.PLACEMENT_CELL, UserRole.ADMINISTRATION].includes(formData.role as any)} onChange={(e) => setFormData({...formData, department: e.target.value as Department})}>
+                <select className="w-full px-4 py-3 rounded-xl border border-slate-200 focus:ring-2 focus:ring-indigo-500 outline-none transition-all bg-white" value={formData.department} disabled={formData.isPrincipal || [UserRole.OFFICE_STAFF, UserRole.PLACEMENT_CELL, UserRole.ADMINISTRATION].includes(formData.role as any)} onChange={(e) => setFormData({ ...formData, department: e.target.value as Department })}>
                   <option value="">Select Department</option>
-                  {([UserRole.STUDENT, UserRole.FACULTY, UserRole.HOD].includes(formData.role as any)) ? 
+                  {([UserRole.STUDENT, UserRole.FACULTY, UserRole.HOD].includes(formData.role as any)) ?
                     academicDepts.map(d => <option key={d} value={d}>{d}</option>) :
                     formData.department && <option value={formData.department}>{formData.department}</option>
                   }
@@ -166,7 +167,7 @@ const SignUpPage: React.FC = () => {
               {formData.role === UserRole.STUDENT && (
                 <div className="space-y-2">
                   <label className="text-sm font-bold text-slate-700">Academic Year</label>
-                  <select className="w-full px-4 py-3 rounded-xl border border-slate-200 focus:ring-2 focus:ring-indigo-500 outline-none transition-all bg-white" value={formData.year} onChange={(e) => setFormData({...formData, year: parseInt(e.target.value)})}>
+                  <select className="w-full px-4 py-3 rounded-xl border border-slate-200 focus:ring-2 focus:ring-indigo-500 outline-none transition-all bg-white" value={formData.year} onChange={(e) => setFormData({ ...formData, year: parseInt(e.target.value) })}>
                     {[1, 2, 3, 4].map(y => <option key={y} value={y}>Year {y}</option>)}
                   </select>
                 </div>
@@ -175,15 +176,47 @@ const SignUpPage: React.FC = () => {
               {formData.role === UserRole.ADMINISTRATION && (
                 <div className="col-span-1 md:col-span-2 p-4 bg-slate-50 rounded-xl border border-slate-200">
                   <label className="flex items-center gap-3 cursor-pointer">
-                    <input type="checkbox" className="w-5 h-5 rounded text-indigo-600 focus:ring-indigo-500" checked={formData.isPrincipal} onChange={(e) => setFormData({...formData, isPrincipal: e.target.checked, department: e.target.checked ? Department.SUPER_ADMIN : Department.ADMIN})} />
+                    <input type="checkbox" className="w-5 h-5 rounded text-indigo-600 focus:ring-indigo-500" checked={formData.isPrincipal} onChange={(e) => setFormData({ ...formData, isPrincipal: e.target.checked, department: e.target.checked ? Department.SUPER_ADMIN : Department.ADMIN })} />
                     <span className="text-sm font-bold text-slate-700">I am the Principal of GCE Erode</span>
                   </label>
                 </div>
               )}
 
               <div className="col-span-1 md:col-span-2 space-y-2">
-                <label className="text-sm font-bold text-slate-700">Create Password</label>
-                <input type="password" required className="w-full px-4 py-3 rounded-xl border border-slate-200 focus:ring-2 focus:ring-indigo-500 outline-none transition-all" value={formData.password} onChange={(e) => setFormData({...formData, password: e.target.value})} />
+                <label className="text-sm font-bold text-slate-700 flex items-center justify-between">
+                  Create Password
+                  <span className="text-[10px] font-medium text-slate-400 uppercase tracking-wider">Secure Protocol Required</span>
+                </label>
+                <div className="relative">
+                  <input
+                    type={showPassword ? "text" : "password"}
+                    required
+                    className="w-full px-4 py-3 rounded-xl border border-slate-200 focus:ring-2 focus:ring-indigo-500 outline-none transition-all pr-12"
+                    value={formData.password}
+                    onChange={(e) => setFormData({ ...formData, password: e.target.value })}
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setShowPassword(!showPassword)}
+                    className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-indigo-600 transition-colors p-1"
+                  >
+                    {showPassword ? <EyeOff size={20} /> : <Eye size={20} />}
+                  </button>
+                </div>
+                <div className="grid grid-cols-2 gap-2 mt-2">
+                  <p className={`text-[11px] flex items-center gap-1 ${formData.password.length >= 8 ? 'text-emerald-600' : 'text-slate-400'}`}>
+                    <ShieldCheck size={12} /> 8+ Characters
+                  </p>
+                  <p className={`text-[11px] flex items-center gap-1 ${/[A-Z]/.test(formData.password) ? 'text-emerald-600' : 'text-slate-400'}`}>
+                    <ShieldCheck size={12} /> Uppercase Letter
+                  </p>
+                  <p className={`text-[11px] flex items-center gap-1 ${/[a-z]/.test(formData.password) ? 'text-emerald-600' : 'text-slate-400'}`}>
+                    <ShieldCheck size={12} /> Lowercase Letter
+                  </p>
+                  <p className={`text-[11px] flex items-center gap-1 ${/\d/.test(formData.password) && /[@$!%*?&]/.test(formData.password) ? 'text-emerald-600' : 'text-slate-400'}`}>
+                    <ShieldCheck size={12} /> Number & Special Char
+                  </p>
+                </div>
               </div>
             </div>
 

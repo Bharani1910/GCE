@@ -1,15 +1,19 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Outlet, useNavigate, Link, useLocation } from 'react-router-dom';
 import { useAuth } from '../services/AuthContext';
 import { NAV_ITEMS } from '../constants';
 import { LogOut, Bell, Menu, X, PlusCircle } from 'lucide-react';
 import { UserRole } from '../types';
+import NewNotificationPopup from './NewNotificationPopup';
 
 const Layout: React.FC = () => {
   const { user, logout } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
+  const [unreadCount, setUnreadCount] = useState(0);
+  const [showNewNotifPopup, setShowNewNotifPopup] = useState(false);
+  const [newNotifCount, setNewNotifCount] = useState(0);
 
   const handleLogout = () => {
     logout();
@@ -17,6 +21,80 @@ const Layout: React.FC = () => {
   };
 
   const canCreateNotification = user?.role !== UserRole.STUDENT;
+
+  // Check for new notifications since last login (only once per session)
+  const checkNewNotifications = async () => {
+    if (!user?.id) return;
+
+    // Check if we've already shown the popup this session
+    const popupShown = sessionStorage.getItem('new_notif_popup_shown');
+    if (popupShown === 'true') return;
+
+    const previousLoginTime = localStorage.getItem('gce_previous_login');
+    if (!previousLoginTime || previousLoginTime === '0') return;
+
+    try {
+      const response = await fetch(
+        `http://localhost:5005/api/notifications/new-since-login?userId=${user.id}&lastLoginTime=${previousLoginTime}`
+      );
+
+      if (response.ok) {
+        const data = await response.json();
+        if (data.newCount > 0) {
+          setNewNotifCount(data.newCount);
+          setShowNewNotifPopup(true);
+          // Mark popup as shown for this session
+          sessionStorage.setItem('new_notif_popup_shown', 'true');
+        }
+      }
+    } catch (error) {
+      console.error('Failed to check new notifications:', error);
+    }
+  };
+
+  // Fetch unread count from backend
+  const fetchUnreadCount = async () => {
+    if (!user?.id) return;
+
+    try {
+      const response = await fetch(`http://localhost:5005/api/notifications/unread-count?userId=${user.id}`);
+      if (response.ok) {
+        const data = await response.json();
+        setUnreadCount(data.unreadCount || 0);
+      }
+    } catch (error) {
+      console.error('Failed to fetch unread count:', error);
+    }
+  };
+
+  // Check for new notifications on mount (only once)
+  useEffect(() => {
+    if (user?.id) {
+      checkNewNotifications();
+    }
+  }, [user?.id]);
+
+  // Fetch unread count on mount and when location changes
+  useEffect(() => {
+    fetchUnreadCount();
+
+    // Poll every 10 seconds for new notifications
+    const interval = setInterval(fetchUnreadCount, 10000);
+    return () => clearInterval(interval);
+  }, [user?.id, location.pathname]);
+
+  const handleBellClick = () => {
+    navigate('/notifications');
+  };
+
+  const handleDismissPopup = () => {
+    setShowNewNotifPopup(false);
+  };
+
+  const handleViewNotifications = () => {
+    setShowNewNotifPopup(false);
+    navigate('/notifications');
+  };
 
   return (
     <div className="min-h-screen bg-slate-50 flex flex-col md:flex-row pb-20 md:pb-0">
@@ -27,15 +105,23 @@ const Layout: React.FC = () => {
           <span className="font-bold text-slate-800">GCE Erode</span>
         </div>
         <div className="flex items-center gap-4">
+          <button onClick={handleBellClick} className="relative p-2 text-slate-400 hover:text-indigo-600 transition-colors">
+            <Bell size={20} />
+            {unreadCount > 0 && (
+              <span className="absolute -top-1 -right-1 w-5 h-5 bg-rose-500 rounded-full flex items-center justify-center text-white text-[10px] font-bold border-2 border-white">
+                {unreadCount > 9 ? '9+' : unreadCount}
+              </span>
+            )}
+          </button>
           <button onClick={() => setIsSidebarOpen(!isSidebarOpen)} className="text-slate-800 p-2">
-            {isSidebarOpen ? <X size={24}/> : <Menu size={24}/>}
+            {isSidebarOpen ? <X size={24} /> : <Menu size={24} />}
           </button>
         </div>
       </div>
 
       {/* Sidebar Overlay (Mobile) */}
       {isSidebarOpen && (
-        <div 
+        <div
           className="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-[60] md:hidden"
           onClick={() => setIsSidebarOpen(false)}
         />
@@ -143,9 +229,16 @@ const Layout: React.FC = () => {
               <p className="text-sm font-medium text-slate-600">{user?.role}</p>
             </div>
             <div className="h-8 w-px bg-slate-200"></div>
-            <button className="p-2 text-slate-400 hover:text-indigo-600 bg-slate-50 rounded-full transition-colors relative">
+            <button
+              onClick={handleBellClick}
+              className="relative p-2 text-slate-400 hover:text-indigo-600 bg-slate-50 rounded-full transition-colors"
+            >
               <Bell size={20} />
-              <span className="absolute top-1 right-1 w-2 h-2 bg-rose-500 rounded-full border border-white"></span>
+              {unreadCount > 0 && (
+                <span className="absolute -top-1 -right-1 w-5 h-5 bg-rose-500 rounded-full flex items-center justify-center text-white text-[10px] font-bold border-2 border-white">
+                  {unreadCount > 9 ? '9+' : unreadCount}
+                </span>
+              )}
             </button>
           </div>
         </header>
@@ -153,6 +246,15 @@ const Layout: React.FC = () => {
           <Outlet />
         </div>
       </main>
+
+      {/* New Notification Popup */}
+      {showNewNotifPopup && (
+        <NewNotificationPopup
+          count={newNotifCount}
+          onDismiss={handleDismissPopup}
+          onViewNotifications={handleViewNotifications}
+        />
+      )}
     </div>
   );
 };

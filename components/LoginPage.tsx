@@ -5,12 +5,11 @@ import { Link, useNavigate } from 'react-router-dom';
 import { Lock, Loader2, AlertCircle, ArrowLeft, CheckCircle, UserCircle } from 'lucide-react';
 
 const LoginPage: React.FC = () => {
-  const { login, resetPassword } = useAuth();
+  const { login } = useAuth();
   const navigate = useNavigate();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [loading, setLoading] = useState(false);
-  const [resetting, setResetting] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState<string | null>(null);
 
@@ -28,22 +27,7 @@ const LoginPage: React.FC = () => {
     }
   };
 
-  const handleForgot = async () => {
-    if (!email) {
-      setError("Email required: Enter your institutional email to proceed.");
-      return;
-    }
-    setResetting(true);
-    setError(null);
-    try {
-      await resetPassword(email);
-      setSuccess("Alert: Reset instructions with a temporary password have been simulated for " + email + ". Check your console.");
-    } catch (err: any) {
-      setError(err.message);
-    } finally {
-      setResetting(false);
-    }
-  };
+  // Removed simulated forgot password logic
 
   return (
     <div className="min-h-screen bg-slate-50 flex items-center justify-center p-6">
@@ -51,7 +35,7 @@ const LoginPage: React.FC = () => {
         <ArrowLeft size={20} />
         Home
       </Link>
-      
+
       <div className="w-full max-w-md space-y-8">
         <div className="text-center space-y-2">
           <div className="w-16 h-16 bg-indigo-600 rounded-2xl flex items-center justify-center text-white font-bold text-3xl mx-auto shadow-xl shadow-indigo-100">GE</div>
@@ -78,12 +62,12 @@ const LoginPage: React.FC = () => {
               <label className="text-sm font-bold text-slate-700 ml-1">Institutional ID / Roll Number</label>
               <div className="relative">
                 <UserCircle className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" size={20} />
-                <input 
-                  type="email" 
-                  required 
-                  placeholder="Email or 23CSE01" 
-                  className="w-full pl-10 pr-4 py-3 rounded-xl border border-slate-200 focus:ring-2 focus:ring-indigo-500 outline-none transition-all" 
-                  value={email} 
+                <input
+                  type="email"
+                  required
+                  placeholder="Email or 23CSE01"
+                  className="w-full pl-10 pr-4 py-3 rounded-xl border border-slate-200 focus:ring-2 focus:ring-indigo-500 outline-none transition-all"
+                  value={email}
                   onChange={(e) => setEmail(e.target.value)}
                   autoCapitalize="none"
                   autoCorrect="off"
@@ -96,9 +80,9 @@ const LoginPage: React.FC = () => {
             <div className="space-y-2">
               <label className="text-sm font-bold text-slate-700 ml-1 flex items-center justify-between">
                 Account Password
-                <button type="button" onClick={handleForgot} disabled={resetting} className="text-xs text-indigo-600 hover:underline font-bold">
-                  {resetting ? 'Simulating Reset...' : 'Forgot Password?'}
-                </button>
+                <Link to="/forgot-password" title="Recover institutional account" className="text-xs text-indigo-600 hover:underline font-bold">
+                  Forgot Password?
+                </Link>
               </label>
               <div className="relative">
                 <Lock className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" size={20} />

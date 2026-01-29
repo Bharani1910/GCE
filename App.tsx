@@ -4,6 +4,7 @@ import { AuthProvider, useAuth } from './services/AuthContext';
 import LandingPage from './components/LandingPage';
 import LoginPage from './components/LoginPage';
 import SignUpPage from './components/SignUpPage';
+import ForgotPasswordPage from './components/ForgotPasswordPage';
 import Layout from './components/Layout';
 import Dashboard from './components/Dashboard';
 import NotificationList from './components/NotificationList';
@@ -19,7 +20,7 @@ const NotFound = () => (
       <p className="text-slate-500 max-w-sm mx-auto font-medium leading-relaxed">
         The page you are looking for is either restricted or does not exist within the GCE Erode Digital Framework.
       </p>
-      <button 
+      <button
         onClick={() => window.location.hash = '/'}
         className="px-8 py-3 bg-indigo-600 text-white font-bold rounded-xl shadow-lg shadow-indigo-200 hover:bg-indigo-700 transition-all active:scale-95"
       >
@@ -48,7 +49,8 @@ const AppRoutes = () => {
       <Route path="/" element={user ? <Navigate to="/dashboard" replace /> : <LandingPage />} />
       <Route path="/login" element={user ? <Navigate to="/dashboard" replace /> : <LoginPage />} />
       <Route path="/signup" element={user ? <Navigate to="/dashboard" replace /> : <SignUpPage />} />
-      
+      <Route path="/forgot-password" element={user ? <Navigate to="/dashboard" replace /> : <ForgotPasswordPage />} />
+
       <Route element={<Layout />}>
         <Route path="/dashboard" element={user ? <Dashboard /> : <Navigate to="/login" replace />} />
         <Route path="/notifications" element={user ? <NotificationList /> : <Navigate to="/login" replace />} />
@@ -56,7 +58,7 @@ const AppRoutes = () => {
         <Route path="/analytics" element={user ? <Analytics /> : <Navigate to="/login" replace />} />
         <Route path="/profile" element={user ? <Profile /> : <Navigate to="/login" replace />} />
       </Route>
-      
+
       <Route path="*" element={<NotFound />} />
     </Routes>
   );

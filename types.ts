@@ -52,6 +52,7 @@ export interface User {
   department: Department;
   year?: number;
   isPrincipal?: boolean;
+  lastLoginTime?: number; // Track last login for new notification detection
 }
 
 export interface Notification {
